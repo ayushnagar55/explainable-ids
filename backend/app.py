@@ -2,6 +2,7 @@
 app.py - Main Flask Application Entry Point
 XAI-based Intrusion Detection System
 """
+
 import os
 from flask import Flask
 from flask_cors import CORS
@@ -17,18 +18,30 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(DevelopmentConfig)
 
-    # Create folders
+    # Create required folders
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["MODEL_FOLDER"], exist_ok=True)
 
-    # Init extensions
+    # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
 
-    # CORS (Production safe)
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    # ✅ CORS (Production + Vercel + Local)
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://explainable-ids.vercel.app"
+                ]
+            }
+        },
+        supports_credentials=True
+    )
 
-    # ✅ Root route (IMPORTANT for checking backend)
+    # ✅ Root route (health check)
     @app.route("/")
     def home():
         return {"message": "XAI-IDS Backend is Live 🚀"}
@@ -46,13 +59,14 @@ def create_app():
     app.register_blueprint(predict_bp, url_prefix="/api")
     app.register_blueprint(explain_bp, url_prefix="/api")
 
-    # ✅ DB create (safe for now because workers=1)
-    with app.app_context():
-        try:
-            db.create_all()
-            print("✅ Database tables created/verified")
-        except Exception as e:
-            print("❌ DB Error:", e)
+    # ✅ FIX: Avoid multiple workers DB conflict (IMPORTANT)
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("GUNICORN_CMD_ARGS"):
+        with app.app_context():
+            try:
+                db.create_all()
+                print("✅ Database tables created/verified")
+            except Exception as e:
+                print("❌ DB Error:", e)
 
     return app
 
