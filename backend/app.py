@@ -28,6 +28,11 @@ def create_app():
     # CORS (Production safe)
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
+    # ✅ Root route (IMPORTANT for checking backend)
+    @app.route("/")
+    def home():
+        return {"message": "XAI-IDS Backend is Live 🚀"}
+
     # Register routes
     from routes.auth import auth_bp
     from routes.upload import upload_bp
@@ -41,14 +46,13 @@ def create_app():
     app.register_blueprint(predict_bp, url_prefix="/api")
     app.register_blueprint(explain_bp, url_prefix="/api")
 
-    # ✅ FIX: Run DB create only once (avoid Gunicorn conflict)
-    if os.environ.get("RUN_MAIN") == "true" or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        with app.app_context():
-            try:
-                db.create_all()
-                print("✅ Database tables created/verified")
-            except Exception as e:
-                print("❌ DB Error:", e)
+    # ✅ DB create (safe for now because workers=1)
+    with app.app_context():
+        try:
+            db.create_all()
+            print("✅ Database tables created/verified")
+        except Exception as e:
+            print("❌ DB Error:", e)
 
     return app
 
