@@ -3,7 +3,7 @@ import axios from 'axios'
 
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://explainable-ids-production.up.railway.app/api',
   headers: { 'Content-Type': 'application/json' }
 })
 
@@ -27,9 +27,10 @@ api.interceptors.response.use(
 )
 
 // ---- Auth ----
-export const login = (data)  => api.post('/api/auth/login', data)
-export const signup = (data) => api.post('/api/auth/signup', data)
-export const getMe = ()      => api.get('/api/auth/me')
+export const login  = (data) => api.post('/auth/login', data)
+export const signup = (data) => api.post('/auth/signup', data)
+export const getMe  = () => api.get('/auth/me')
+
 // ---- Upload ----
 export const uploadCSV = (formData) =>
   api.post('/upload-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
