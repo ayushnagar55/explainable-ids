@@ -18,26 +18,28 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(DevelopmentConfig)
 
-    # Create required folders
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(app.config["MODEL_FOLDER"], exist_ok=True)
+    # ✅ Create required folders (Railway safe)
+    os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
+    os.makedirs(app.config.get("MODEL_FOLDER", "models"), exist_ok=True)
 
-    # Initialize extensions
+    # ✅ Init extensions
     db.init_app(app)
     jwt.init_app(app)
 
-    # ✅ CORS (Production + Vercel + Local)
+    # ✅ CORS (dynamic + safe)
+    FRONTEND_URL = os.environ.get("FRONTEND_URL")
+
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+
+    if FRONTEND_URL:
+        allowed_origins.append(FRONTEND_URL)
+
     CORS(
         app,
-        resources={
-            r"/api/*": {
-                "origins": [
-                    "http://localhost:5173",
-                    "http://localhost:3000",
-                    "https://explainable-ids.vercel.app"
-                ]
-            }
-        },
+        resources={r"/api/*": {"origins": allowed_origins}},
         supports_credentials=True
     )
 
@@ -46,7 +48,7 @@ def create_app():
     def home():
         return {"message": "XAI-IDS Backend is Live 🚀"}
 
-    # Register routes
+    # ✅ Register routes
     from routes.auth import auth_bp
     from routes.upload import upload_bp
     from routes.train import train_bp
@@ -59,8 +61,8 @@ def create_app():
     app.register_blueprint(predict_bp, url_prefix="/api")
     app.register_blueprint(explain_bp, url_prefix="/api")
 
-    # ✅ FIX: Avoid multiple workers DB conflict (IMPORTANT)
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("GUNICORN_CMD_ARGS"):
+    # ✅ IMPORTANT: Avoid Gunicorn multi-worker DB conflict
+    if os.environ.get("RUN_MAIN") == "true" or not os.environ.get("GUNICORN_CMD_ARGS"):
         with app.app_context():
             try:
                 db.create_all()
