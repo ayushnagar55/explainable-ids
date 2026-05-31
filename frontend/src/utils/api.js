@@ -27,10 +27,9 @@ api.interceptors.response.use(
 )
 
 // ---- Auth ----
-export const login = (data)  => api.post('/auth/login', data)
-export const signup = (data) => api.post('/auth/signup', data)
-export const getMe = ()      => api.get('/auth/me')
-
+export const login = (data)  => api.post('/api/auth/login', data)
+export const signup = (data) => api.post('/api/auth/signup', data)
+export const getMe = ()      => api.get('/api/auth/me')
 // ---- Upload ----
 export const uploadCSV = (formData) =>
   api.post('/upload-csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
