@@ -38,6 +38,7 @@ def load_and_preprocess(csv_path: str, model_folder: str, sample_size: int = 500
     """
     print(f"📂 Loading dataset from {csv_path}...")
     df = pd.read_csv(csv_path, encoding="utf-8", low_memory=False)
+    df.columns = df.columns.str.strip()
     print(f"   Shape: {df.shape}")
 
     # --- Step 1: Sample for faster training in minor project ---
